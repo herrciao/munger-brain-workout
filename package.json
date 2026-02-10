@@ -1,0 +1,10 @@
+{
+  "name": "munger-brain-workout",
+  "version": "1.0.0",
+  "description": "查理·芒格 100 個思維模型訓練測驗",
+  "private": true,
+  "scripts": {
+    "validate": "node validate.js",
+    "start": "open index.html"
+  }
+}

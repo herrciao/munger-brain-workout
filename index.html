@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>芒格思維模型訓練測驗 v1.0</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: #f5f5f0;
+      color: #2c2c2c;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* ── 頂部標題 ── */
+    header {
+      text-align: center;
+      padding: 40px 0 20px;
+      border-bottom: 2px solid #d4d0c8;
+      margin-bottom: 32px;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    header p {
+      font-size: 0.95rem;
+      color: #666;
+    }
+    header .version {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-top: 6px;
+    }
+
+    /* ── 進度條 ── */
+    .progress-bar {
+      background: #e0ddd5;
+      border-radius: 6px;
+      height: 8px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      background: #4a7c59;
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    /* ── 題目卡片 ── */
+    .question-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .question-card .scenario {
+      font-size: 1.05rem;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+    .question-card .scenario strong {
+      color: #4a7c59;
+    }
+
+    /* ── 選項 ── */
+    .options { list-style: none; }
+    .options li {
+      background: #fafaf7;
+      border: 2px solid #e8e5dd;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.98rem;
+    }
+    .options li:hover {
+      border-color: #4a7c59;
+      background: #f0f5f1;
+    }
+    .options li.selected {
+      border-color: #4a7c59;
+      background: #e8f0ea;
+    }
+    .options li.correct {
+      border-color: #4a7c59;
+      background: #d4edda;
+    }
+    .options li.wrong {
+      border-color: #c0392b;
+      background: #fce4e4;
+    }
+    .options li.disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+    .options li.disabled:hover {
+      border-color: #e8e5dd;
+      background: #fafaf7;
+    }
+    .options li.correct.disabled:hover {
+      border-color: #4a7c59;
+      background: #d4edda;
+    }
+    .options li.wrong.disabled:hover {
+      border-color: #c0392b;
+      background: #fce4e4;
+    }
+
+    /* ── 解析區 ── */
+    .explanation {
+      background: #f9f8f4;
+      border-left: 4px solid #4a7c59;
+      border-radius: 0 8px 8px 0;
+      padding: 20px 22px;
+      margin-top: 20px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .explanation.show { display: block; }
+    .explanation .result-tag {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .explanation .result-tag.correct { color: #27763a; }
+    .explanation .result-tag.wrong { color: #c0392b; }
+    .explanation .model-tag {
+      display: inline-block;
+      background: #4a7c59;
+      color: #fff;
+      padding: 3px 12px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      margin-bottom: 10px;
+      margin-right: 6px;
+    }
+    .explanation .model-tag.secondary {
+      background: #7a9e7e;
+    }
+    .explanation .detail {
+      font-size: 0.93rem;
+      color: #444;
+      margin-top: 8px;
+      line-height: 1.8;
+    }
+    .explanation .wrong-reasons {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #ccc;
+      font-size: 0.88rem;
+      color: #666;
+    }
+    .explanation .wrong-reasons strong {
+      color: #555;
+    }
+
+    /* ── 按鈕 ── */
+    .btn {
+      display: inline-block;
+      padding: 12px 32px;
+      background: #4a7c59;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 16px;
+    }
+    .btn:hover { background: #3d6a4a; }
+    .btn:disabled {
+      background: #bbb;
+      cursor: not-allowed;
+    }
+    .btn-center { text-align: center; }
+
+    /* ── 開始頁 & 結果頁 ── */
+    .start-page, .result-page {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .start-page h2 {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+    .start-page p {
+      color: #666;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .start-page .note {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 20px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .result-page h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+    .result-page .score {
+      font-size: 3rem;
+      font-weight: 800;
+      color: #4a7c59;
+      margin: 16px 0;
+    }
+    .result-page .score span {
+      font-size: 1.2rem;
+      color: #888;
+      font-weight: 400;
+    }
+    .result-page .summary {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: left;
+      margin: 24px 0;
+      font-size: 0.93rem;
+      line-height: 1.8;
+    }
+    .result-page .summary h3 {
+      margin-bottom: 12px;
+      font-size: 1.05rem;
+    }
+    .result-page .model-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .result-page .model-list .tag {
+      background: #e8f0ea;
+      color: #3d6a4a;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+    .result-page .model-list .tag.missed {
+      background: #fce4e4;
+      color: #a33;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RWD ── */
+    @media (max-width: 480px) {
+      .container { padding: 16px 14px 40px; }
+      header h1 { font-size: 1.3rem; }
+      .question-card { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- 由 JS 渲染 -->
+</div>
+
+<!-- 題庫（模組化載入，方便維護與擴充） -->
+<script src="questions/_loader.js"></script>
+<script src="questions/01-general.js"></script>
+<script src="questions/02-math.js"></script>
+<script src="questions/03-systems.js"></script>
+<script src="questions/04-physics-bio.js"></script>
+<script src="questions/05-psychology.js"></script>
+<script src="questions/06-economics-war.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  芒格思維模型訓練測驗 v1.0 — 2026-02-10
+//  題庫 100 題，每次隨機抽 20 題
+//  誘餌選項來源：Kahneman / Eyal / Lindstrom / Greene
+// ═══════════════════════════════════════════════════
+const VERSION = 'v1.0 — 2026-02-10';
+const QUIZ_SIZE = 20;
+
+// ── Fisher-Yates Shuffle ──
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── 應用狀態 ──
+let activeQuiz = [];     // 本輪抽到的 20 題
+let currentIndex = 0;
+let score = 0;
+let answers = [];
+let answered = false;
+
+const app = document.getElementById('app');
+
+// ── 渲染 header ──
+function headerHTML() {
+  return `
+    <header>
+      <h1>查理・芒格 思維模型訓練</h1>
+      <p>以 100 個思維模型為基礎的情境式測驗</p>
+      <div class="version">${VERSION}｜題庫 ${allQuestions.length} 題，每次隨機 ${QUIZ_SIZE} 題</div>
+    </header>
+  `;
+}
+
+// ── 渲染：開始頁 ──
+function renderStart() {
+  app.innerHTML = `
+    ${headerHTML()}
+    <div class="start-page">
+      <h2>歡迎來到思維訓練場</h2>
+      <p>題庫共 <strong>${allQuestions.length} 道情境題</strong>，每次隨機抽取 ${QUIZ_SIZE} 題。</p>
+      <p>每一題作答後，你會看到對應的芒格思維模型與詳細解析。</p>
+      <p style="margin-top:8px;font-size:0.9rem;color:#888;">錯誤選項混入了 Kahneman、Nir Eyal、Lindstrom、Robert Greene 等理論作為誘餌，<br>幫助你區分「芒格體系 vs 其他流派」。</p>
+      <div class="note">
+        這不是考試，而是一個<strong>「訓練你在現實中用對思維模型」</strong>的工具。<br>
+        重點是形成正確的直覺，而非追求分數。每次重來都是不同的題目組合。
+      </div>
+      <button class="btn" onclick="startQuiz()">開始訓練</button>
+    </div>
+  `;
+}
+
+// ── 渲染：題目 ──
+function renderQuestion() {
+  const q = activeQuiz[currentIndex];
+  const pct = ((currentIndex) / QUIZ_SIZE * 100).toFixed(0);
+
+  app.innerHTML = `
+    ${headerHTML()}
+    <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="progress-text">第 ${currentIndex + 1} 題 / 共 ${QUIZ_SIZE} 題</div>
+
+    <div class="question-card">
+      <div class="scenario">${q.scenario}</div>
+      <ul class="options" id="optionsList">
+        ${q.options.map((opt, i) => `<li data-idx="${i}" onclick="selectOption(${i})">${opt}</li>`).join('')}
+      </ul>
+
+      <div class="explanation" id="explanation">
+        <div class="result-tag" id="resultTag"></div>
+        <div id="modelTags"></div>
+        <div class="detail" id="expDetail"></div>
+        <div class="wrong-reasons" id="wrongReasons"></div>
+      </div>
+    </div>
+
+    <div class="btn-center">
+      <button class="btn" id="nextBtn" style="display:none" onclick="nextQuestion()">
+        ${currentIndex < QUIZ_SIZE - 1 ? '下一題 →' : '查看結果'}
+      </button>
+    </div>
+  `;
+  answered = false;
+}
+
+// ── 選擇選項 ──
+function selectOption(idx) {
+  if (answered) return;
+  answered = true;
+
+  const q = activeQuiz[currentIndex];
+  const isCorrect = idx === q.answer;
+  if (isCorrect) score++;
+  answers.push({ qIndex: currentIndex, selected: idx, correct: isCorrect });
+
+  const lis = document.querySelectorAll('#optionsList li');
+  lis.forEach((li, i) => {
+    li.classList.add('disabled');
+    if (i === q.answer) li.classList.add('correct');
+    if (i === idx && !isCorrect) li.classList.add('wrong');
+  });
+
+  const expEl = document.getElementById('explanation');
+  const tagEl = document.getElementById('resultTag');
+  const modelEl = document.getElementById('modelTags');
+  const detailEl = document.getElementById('expDetail');
+  const wrongEl = document.getElementById('wrongReasons');
+
+  tagEl.textContent = isCorrect ? '✅ 正確！' : '❌ 錯誤';
+  tagEl.className = 'result-tag ' + (isCorrect ? 'correct' : 'wrong');
+
+  let tagsHTML = q.models.map(m => `<span class="model-tag">主要模型：${m}</span>`).join('');
+  if (q.secondaryModels && q.secondaryModels.length > 0) {
+    tagsHTML += q.secondaryModels.map(m => `<span class="model-tag secondary">輔助模型：${m}</span>`).join('');
+  }
+  modelEl.innerHTML = tagsHTML;
+  detailEl.innerHTML = q.explanation;
+  wrongEl.innerHTML = `<strong>為什麼其他選項看起來合理但實際上錯：</strong><br>${q.wrongReasons}`;
+
+  expEl.classList.add('show');
+  document.getElementById('nextBtn').style.display = 'inline-block';
+
+  setTimeout(() => expEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+// ── 下一題 ──
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex < QUIZ_SIZE) {
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    renderResult();
+  }
+}
+
+// ── 渲染：結果頁 ──
+function renderResult() {
+  const correctModels = [];
+  const wrongModels = [];
+  answers.forEach(a => {
+    const q = activeQuiz[a.qIndex];
+    const allModels = [...q.models, ...(q.secondaryModels || [])];
+    if (a.correct) {
+      correctModels.push(...allModels);
+    } else {
+      wrongModels.push(...allModels);
+    }
+  });
+
+  const uniqueCorrect = [...new Set(correctModels)];
+  const uniqueWrong = [...new Set(wrongModels)];
+
+  let level = '';
+  if (score >= 18) level = '🏆 芒格級思維大師——你的多元模型格子已經相當完善！';
+  else if (score >= 14) level = '📈 優秀的跨學科思考者——繼續練習，把模型內化為直覺。';
+  else if (score >= 10) level = '🔍 有潛力的理性決策者——建議重新閱讀答錯題目的模型說明。';
+  else level = '📚 思維訓練新手——沒關係！芒格說「一生持續學習」，現在就是最好的開始。';
+
+  app.innerHTML = `
+    ${headerHTML()}
+    <div class="result-page">
+      <h2>訓練結果</h2>
+      <div class="score">${score} <span>/ ${QUIZ_SIZE}</span></div>
+      <p>${level}</p>
+
+      <div class="summary">
+        <h3>你掌握得較好的思維模型：</h3>
+        <div class="model-list">
+          ${uniqueCorrect.length > 0
+            ? uniqueCorrect.map(m => `<span class="tag">${m}</span>`).join('')
+            : '<span style="color:#999">（無）</span>'}
+        </div>
+      </div>
+
+      <div class="summary">
+        <h3>建議加強的思維模型：</h3>
+        <div class="model-list">
+          ${uniqueWrong.length > 0
+            ? uniqueWrong.map(m => `<span class="tag missed">${m}</span>`).join('')
+            : '<span style="color:#4a7c59">全部答對！太厲害了。</span>'}
+        </div>
+      </div>
+
+      <div class="summary" style="font-size:0.88rem;color:#666;">
+        <h3>芒格的一句話</h3>
+        <p>「你不需要什麼都懂，但幾個真正重大的理念可以解決大部分問題。」</p>
+        <p style="margin-top:8px">每次重來都是不同的 ${QUIZ_SIZE} 題組合。持續訓練，直到芒格的思維模型成為你的本能反應。</p>
+      </div>
+
+      <button class="btn" onclick="resetQuiz()">再來一輪（隨機新題）</button>
+    </div>
+  `;
+}
+
+// ── 控制 ──
+function startQuiz() {
+  activeQuiz = shuffle(allQuestions).slice(0, QUIZ_SIZE);
+  currentIndex = 0;
+  score = 0;
+  answers = [];
+  renderQuestion();
+}
+
+function resetQuiz() {
+  activeQuiz = [];
+  currentIndex = 0;
+  score = 0;
+  answers = [];
+  renderStart();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── 初始化 ──
+renderStart();
+</script>
+</body>
+</html>
