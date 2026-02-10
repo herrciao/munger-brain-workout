@@ -270,11 +270,110 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* ── 芒格語錄卡片 ── */
+    .munger-quote {
+      background: #2c2c2c;
+      color: #e8e5dd;
+      border-radius: 12px;
+      padding: 32px 28px;
+      margin: 28px 0;
+      position: relative;
+    }
+    .munger-quote::before {
+      content: '「';
+      font-size: 4rem;
+      color: #4a7c59;
+      position: absolute;
+      top: 8px;
+      left: 16px;
+      line-height: 1;
+      opacity: 0.5;
+    }
+    .munger-quote .quote-text {
+      font-size: 1.05rem;
+      line-height: 1.9;
+      padding-left: 8px;
+      font-style: italic;
+    }
+    .munger-quote .quote-source {
+      text-align: right;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #999;
+    }
+
+    /* ── Beta 註冊區 ── */
+    .beta-section {
+      background: linear-gradient(135deg, #f0f5f1 0%, #e8f0ea 100%);
+      border: 2px solid #4a7c59;
+      border-radius: 12px;
+      padding: 32px 28px;
+      margin: 28px 0;
+      text-align: center;
+    }
+    .beta-section h3 {
+      font-size: 1.15rem;
+      margin-bottom: 8px;
+      color: #2c2c2c;
+    }
+    .beta-section p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .beta-form {
+      display: flex;
+      gap: 10px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+    .beta-form input[type="email"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #d4d0c8;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .beta-form input[type="email"]:focus {
+      border-color: #4a7c59;
+    }
+    .beta-form button {
+      padding: 12px 24px;
+      background: #4a7c59;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .beta-form button:hover { background: #3d6a4a; }
+    .beta-form button:disabled {
+      background: #bbb;
+      cursor: not-allowed;
+    }
+    .beta-success {
+      color: #27763a;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 12px 0;
+    }
+    .beta-note {
+      font-size: 0.78rem;
+      color: #999;
+      margin-top: 12px;
+    }
+
     /* ── RWD ── */
     @media (max-width: 480px) {
       .container { padding: 16px 14px 40px; }
       header h1 { font-size: 1.3rem; }
       .question-card { padding: 20px 16px; }
+      .beta-form { flex-direction: column; }
+      .munger-quote { padding: 28px 20px; }
     }
   </style>
 </head>
@@ -300,6 +399,29 @@
 // ═══════════════════════════════════════════════════
 const VERSION = 'v1.0 — 2026-02-10';
 const QUIZ_SIZE = 20;
+
+// ── 芒格語錄（摘自《窮查理的普通常識》） ──
+const MUNGER_QUOTES = [
+  "我這輩子遇到的聰明人（來自各行各業）沒有不每天閱讀的，沒有，一個都沒有。",
+  "我們賺錢，靠的是記住淺顯的，而不是掌握深奧的。",
+  "如果你在生活中唯一的成功就是透過買股票發財，那麼這是一種失敗的生活；生活不僅僅是精明的累積財富。",
+  "生活和事業上的成功，大多來自你知道應該避免哪些事情：死得太早、糟糕的婚姻等等。",
+  "引進新觀念並不難，難的是清除舊觀念。",
+  "不自欺的精神是最好的精神，這種精神非常強大，因為太罕見了。",
+  "擁有常識不但意味著有能力辨認智慧，也意味有能力拒絕愚蠢。如果排除了許多蠢事，就不會把自己搞得一團糟。",
+  "找到好配偶的最佳方法是什麼呢？唯一之道是你首先必須值得擁有好配偶，因為從定義上來說，好配偶可絕不是傻瓜。",
+  "我還未聽說有誰能夠很快成為一名偉大的投資者。所以訣竅在於不斷學習。你必須喜歡學習的過程。",
+  "激情和天分，哪個更重要呢？我認為激情比頭腦的能力更加重要。",
+  "我手裡只要有一本書，就不會覺得浪費時間。",
+  "獲取普世的智慧，並相對調整你的行為，即使特立獨行讓你在人群中不受歡迎……那就隨便他們吧。",
+  "關心別人賺錢比自己更快，是一種致命的罪。妒忌真是一種愚蠢的罪，是唯一一種不可能得到任何樂趣的罪行。",
+  "如果烏龜能夠從它那些最棒前輩身上，汲取已經過實踐驗證的洞見，那麼它也能跑贏那些追求獨創性、不願向優秀前輩學習的兔子。",
+  "唯一的獲勝方法是工作、工作、工作、工作，並希望擁有一點洞見。",
+  "如果你一開始就能夠在諸如誠實這樣簡單的事情上擁有完美紀錄，將會在這個世界上走得很遠。",
+  "你一旦開始做壞事，第二次做就容易多了，到最後，就會道德淪喪。",
+  "人們計算得太多，思考得太少。",
+  "別只看到錢。選擇你願意與他交朋友的客戶。"
+];
 
 // ── Fisher-Yates Shuffle ──
 function shuffle(arr) {
@@ -456,6 +578,9 @@ function renderResult() {
   else if (score >= 10) level = '🔍 有潛力的理性決策者——建議重新閱讀答錯題目的模型說明。';
   else level = '📚 思維訓練新手——沒關係！芒格說「一生持續學習」，現在就是最好的開始。';
 
+  // 隨機選一條芒格語錄
+  const randomQuote = MUNGER_QUOTES[Math.floor(Math.random() * MUNGER_QUOTES.length)];
+
   app.innerHTML = `
     ${headerHTML()}
     <div class="result-page">
@@ -481,13 +606,28 @@ function renderResult() {
         </div>
       </div>
 
-      <div class="summary" style="font-size:0.88rem;color:#666;">
-        <h3>芒格的一句話</h3>
-        <p>「你不需要什麼都懂，但幾個真正重大的理念可以解決大部分問題。」</p>
-        <p style="margin-top:8px">每次重來都是不同的 ${QUIZ_SIZE} 題組合。持續訓練，直到芒格的思維模型成為你的本能反應。</p>
+      <div class="munger-quote">
+        <div class="quote-text">${randomQuote}</div>
+        <div class="quote-source">——查理·芒格《窮查理的普通常識》</div>
       </div>
 
+      <p style="font-size:0.88rem;color:#666;text-align:center;margin:8px 0 24px;">
+        每次重來都是不同的 ${QUIZ_SIZE} 題組合。持續訓練，直到芒格的思維模型成為你的本能反應。
+      </p>
+
       <button class="btn" onclick="resetQuiz()">再來一輪（隨機新題）</button>
+
+      <div class="beta-section">
+        <h3>喜歡這個訓練嗎？</h3>
+        <p>留下你的 Email，搶先成為 Beta 版用戶。<br>我們正在打造更完整的思維訓練系統。</p>
+        <div id="beta-form-area">
+          <form class="beta-form" onsubmit="handleBetaSignup(event)">
+            <input type="email" id="beta-email" placeholder="your@email.com" required>
+            <button type="submit">我要加入</button>
+          </form>
+        </div>
+        <div class="beta-note">我們不會寄垃圾信，僅用於 Beta 版本發布通知。</div>
+      </div>
     </div>
   `;
 }
@@ -508,6 +648,24 @@ function resetQuiz() {
   answers = [];
   renderStart();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Beta 註冊 ──
+function handleBetaSignup(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('beta-email');
+  const email = emailInput.value.trim();
+  if (!email) return;
+
+  // 將 email 存入 localStorage（前端暫存，之後可串接後端 API）
+  const existing = JSON.parse(localStorage.getItem('munger_beta_emails') || '[]');
+  if (!existing.includes(email)) {
+    existing.push(email);
+    localStorage.setItem('munger_beta_emails', JSON.stringify(existing));
+  }
+
+  document.getElementById('beta-form-area').innerHTML =
+    '<div class="beta-success">✅ 感謝你！我們會在 Beta 版上線時通知你。</div>';
 }
 
 // ── 初始化 ──
