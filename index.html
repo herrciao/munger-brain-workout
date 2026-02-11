@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>芒格思維模型訓練測驗 v1.0</title>
+  <title>芒格思維模型訓練測驗 v2.0</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -367,6 +367,52 @@
       margin-top: 12px;
     }
 
+    /* ── 模式選擇卡片 ── */
+    .mode-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 24px 0;
+      text-align: left;
+    }
+    .mode-card {
+      background: #fff;
+      border: 2px solid #e8e5dd;
+      border-radius: 10px;
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-card:hover {
+      border-color: #4a7c59;
+      background: #f0f5f1;
+    }
+    .mode-card.selected {
+      border-color: #4a7c59;
+      background: #e8f0ea;
+    }
+    .mode-card .mode-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+    .mode-card .mode-desc {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.5;
+    }
+    .mode-card .mode-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .mode-tag.tag-v1 { background: #e8f0ea; color: #3d6a4a; }
+    .mode-tag.tag-v2 { background: #fef3cd; color: #856404; }
+    .mode-tag.tag-all { background: #f0e6f6; color: #6f42c1; }
+
     /* ── RWD ── */
     @media (max-width: 480px) {
       .container { padding: 16px 14px 40px; }
@@ -390,6 +436,8 @@
 <script src="questions/04-physics-bio.js"></script>
 <script src="questions/05-psychology.js"></script>
 <script src="questions/06-economics-war.js"></script>
+<script src="questions/07-cross-fusion.js"></script>
+<script src="questions/08-reverse-diag.js"></script>
 
 <script>
 // ═══════════════════════════════════════════════════
@@ -397,8 +445,15 @@
 //  題庫 100 題，每次隨機抽 20 題
 //  誘餌選項來源：Kahneman / Eyal / Lindstrom / Greene
 // ═══════════════════════════════════════════════════
-const VERSION = 'v1.0 — 2026-02-10';
+const VERSION = 'v2.0 — 2026-02-11';
 const QUIZ_SIZE = 20;
+
+// ── 題庫分類 ──
+const v1Questions = allQuestions.filter(q => !q.type);
+const v2Questions = allQuestions.filter(q => q.type === 'cross-fusion' || q.type === 'reverse-diag');
+
+// ── 模式定義 ──
+let quizMode = 'classic'; // classic | advanced | challenge
 
 // ── 芒格語錄（摘自《窮查理的普通常識》） ──
 const MUNGER_QUOTES = [
@@ -444,11 +499,13 @@ const app = document.getElementById('app');
 
 // ── 渲染 header ──
 function headerHTML() {
+  const modeLabels = { classic: '經典模式', advanced: '進階模式', challenge: '全面挑戰' };
+  const quizTotal = quizMode === 'challenge' ? allQuestions.length : QUIZ_SIZE;
   return `
     <header>
       <h1>查理・芒格 思維模型訓練</h1>
-      <p>以 100 個思維模型為基礎的情境式測驗</p>
-      <div class="version">${VERSION}｜題庫 ${allQuestions.length} 題，每次隨機 ${QUIZ_SIZE} 題</div>
+      <p>以 100+ 個思維模型為基礎的情境式測驗</p>
+      <div class="version">${VERSION}｜題庫 ${allQuestions.length} 題｜${modeLabels[quizMode]} · ${quizTotal} 題</div>
     </header>
   `;
 }
@@ -459,9 +516,24 @@ function renderStart() {
     ${headerHTML()}
     <div class="start-page">
       <h2>歡迎來到思維訓練場</h2>
-      <p>題庫共 <strong>${allQuestions.length} 道情境題</strong>，每次隨機抽取 ${QUIZ_SIZE} 題。</p>
+      <p>題庫共 <strong>${allQuestions.length} 道情境題</strong>（v1 經典 ${v1Questions.length} 題 + v2 進階 ${v2Questions.length} 題）</p>
       <p>每一題作答後，你會看到對應的芒格思維模型與詳細解析。</p>
-      <p style="margin-top:8px;font-size:0.9rem;color:#888;">錯誤選項混入了 Kahneman、Nir Eyal、Lindstrom、Robert Greene 等理論作為誘餌，<br>幫助你區分「芒格體系 vs 其他流派」。</p>
+
+      <div class="mode-cards">
+        <div class="mode-card ${quizMode === 'classic' ? 'selected' : ''}" onclick="selectMode('classic')">
+          <div class="mode-title">經典模式 <span class="mode-tag tag-v1">v1</span></div>
+          <div class="mode-desc">從全部 ${allQuestions.length} 題中隨機抽 ${QUIZ_SIZE} 題。涵蓋所有題型，適合日常練習。</div>
+        </div>
+        <div class="mode-card ${quizMode === 'advanced' ? 'selected' : ''}" onclick="selectMode('advanced')">
+          <div class="mode-title">進階模式 <span class="mode-tag tag-v2">v2 NEW</span></div>
+          <div class="mode-desc">只從 ${v2Questions.length} 題進階題中抽 ${QUIZ_SIZE} 題。包含交叉融合題與反向診斷題，顯著更難。</div>
+        </div>
+        <div class="mode-card ${quizMode === 'challenge' ? 'selected' : ''}" onclick="selectMode('challenge')">
+          <div class="mode-title">全面挑戰 <span class="mode-tag tag-all">FULL</span></div>
+          <div class="mode-desc">全部 ${allQuestions.length} 題，隨機順序，一次做完。適合想要完整測試的硬核玩家。</div>
+        </div>
+      </div>
+
       <div class="note">
         這不是考試，而是一個<strong>「訓練你在現實中用對思維模型」</strong>的工具。<br>
         重點是形成正確的直覺，而非追求分數。每次重來都是不同的題目組合。
@@ -471,15 +543,21 @@ function renderStart() {
   `;
 }
 
+function selectMode(mode) {
+  quizMode = mode;
+  renderStart();
+}
+
 // ── 渲染：題目 ──
 function renderQuestion() {
   const q = activeQuiz[currentIndex];
-  const pct = ((currentIndex) / QUIZ_SIZE * 100).toFixed(0);
+  const total = activeQuiz.length;
+  const pct = ((currentIndex) / total * 100).toFixed(0);
 
   app.innerHTML = `
     ${headerHTML()}
     <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
-    <div class="progress-text">第 ${currentIndex + 1} 題 / 共 ${QUIZ_SIZE} 題</div>
+    <div class="progress-text">第 ${currentIndex + 1} 題 / 共 ${total} 題</div>
 
     <div class="question-card">
       <div class="scenario">${q.scenario}</div>
@@ -497,7 +575,7 @@ function renderQuestion() {
 
     <div class="btn-center">
       <button class="btn" id="nextBtn" style="display:none" onclick="nextQuestion()">
-        ${currentIndex < QUIZ_SIZE - 1 ? '下一題 →' : '查看結果'}
+        ${currentIndex < activeQuiz.length - 1 ? '下一題 →' : '查看結果'}
       </button>
     </div>
   `;
@@ -547,7 +625,7 @@ function selectOption(idx) {
 // ── 下一題 ──
 function nextQuestion() {
   currentIndex++;
-  if (currentIndex < QUIZ_SIZE) {
+  if (currentIndex < activeQuiz.length) {
     renderQuestion();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } else {
@@ -572,10 +650,12 @@ function renderResult() {
   const uniqueCorrect = [...new Set(correctModels)];
   const uniqueWrong = [...new Set(wrongModels)];
 
+  const total = activeQuiz.length;
+  const pctScore = score / total;
   let level = '';
-  if (score >= 18) level = '🏆 芒格級思維大師——你的多元模型格子已經相當完善！';
-  else if (score >= 14) level = '📈 優秀的跨學科思考者——繼續練習，把模型內化為直覺。';
-  else if (score >= 10) level = '🔍 有潛力的理性決策者——建議重新閱讀答錯題目的模型說明。';
+  if (pctScore >= 0.9) level = '🏆 芒格級思維大師——你的多元模型格子已經相當完善！';
+  else if (pctScore >= 0.7) level = '📈 優秀的跨學科思考者——繼續練習，把模型內化為直覺。';
+  else if (pctScore >= 0.5) level = '🔍 有潛力的理性決策者——建議重新閱讀答錯題目的模型說明。';
   else level = '📚 思維訓練新手——沒關係！芒格說「一生持續學習」，現在就是最好的開始。';
 
   // 隨機選一條芒格語錄
@@ -585,7 +665,7 @@ function renderResult() {
     ${headerHTML()}
     <div class="result-page">
       <h2>訓練結果</h2>
-      <div class="score">${score} <span>/ ${QUIZ_SIZE}</span></div>
+      <div class="score">${score} <span>/ ${total}</span></div>
       <p>${level}</p>
 
       <div class="summary">
@@ -612,7 +692,7 @@ function renderResult() {
       </div>
 
       <p style="font-size:0.88rem;color:#666;text-align:center;margin:8px 0 24px;">
-        每次重來都是不同的 ${QUIZ_SIZE} 題組合。持續訓練，直到芒格的思維模型成為你的本能反應。
+        每次重來都是不同的題目組合。持續訓練，直到芒格的思維模型成為你的本能反應。
       </p>
 
       <button class="btn" onclick="resetQuiz()">再來一輪（隨機新題）</button>
@@ -634,7 +714,14 @@ function renderResult() {
 
 // ── 控制 ──
 function startQuiz() {
-  activeQuiz = shuffle(allQuestions).slice(0, QUIZ_SIZE);
+  let pool;
+  if (quizMode === 'advanced') {
+    pool = v2Questions;
+  } else {
+    pool = allQuestions;
+  }
+  const size = quizMode === 'challenge' ? pool.length : Math.min(QUIZ_SIZE, pool.length);
+  activeQuiz = shuffle(pool).slice(0, size);
   currentIndex = 0;
   score = 0;
   answers = [];

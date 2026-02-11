@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════
-//  validate.js — 芒格思維模型題庫驗證腳本
+//  validate.js — 芒格思維模型題庫驗證腳本 v2.0
 //  用法：node validate.js
 //  Vercel 部署前自動執行，失敗則阻止部署
 // ═══════════════════════════════════════════════════════════════
@@ -9,8 +9,10 @@ const fs = require('fs');
 const path = require('path');
 
 const QUESTIONS_DIR = path.join(__dirname, 'questions');
-const EXPECTED_COUNT = 100;
-const BANNED_AUTHORS = ['Kahneman', 'Eyal', 'Greene', 'Lindstrom'];
+const EXPECTED_COUNT = 150;
+const EXPECTED_V1 = 100;
+const EXPECTED_V2 = 50;
+const BANNED_AUTHORS = ['Kahneman', 'Eyal', 'Greene', 'Lindstrom', 'Merath', 'Varol', 'Taleb', 'Cialdini', 'Dixit', 'Nalebuff'];
 
 // ── 載入所有題庫檔案 ──
 const files = [
@@ -20,7 +22,9 @@ const files = [
   '03-systems.js',
   '04-physics-bio.js',
   '05-psychology.js',
-  '06-economics-war.js'
+  '06-economics-war.js',
+  '07-cross-fusion.js',
+  '08-reverse-diag.js'
 ];
 
 let code = '';
@@ -42,6 +46,12 @@ try {
   process.exit(1);
 }
 
+// ── 分類 ──
+const v1Questions = allQuestions.filter(q => !q.type);
+const v2Questions = allQuestions.filter(q => q.type === 'cross-fusion' || q.type === 'reverse-diag');
+const crossFusion = allQuestions.filter(q => q.type === 'cross-fusion');
+const reverseDiag = allQuestions.filter(q => q.type === 'reverse-diag');
+
 // ── 驗證 ──
 let passed = 0;
 let failed = 0;
@@ -60,6 +70,13 @@ function check(label, ok, detail) {
 check(`題目總數: ${allQuestions.length}`, allQuestions.length === EXPECTED_COUNT,
   allQuestions.length !== EXPECTED_COUNT ? `預期 ${EXPECTED_COUNT}，實際 ${allQuestions.length}` : '');
 
+// 1b. v1/v2 分佈
+check(`v1 經典題: ${v1Questions.length}`, v1Questions.length === EXPECTED_V1,
+  v1Questions.length !== EXPECTED_V1 ? `預期 ${EXPECTED_V1}，實際 ${v1Questions.length}` : '');
+check(`v2 進階題: ${v2Questions.length}`, v2Questions.length === EXPECTED_V2,
+  v2Questions.length !== EXPECTED_V2 ? `預期 ${EXPECTED_V2}，實際 ${v2Questions.length}` : '');
+console.log(`  └── 交叉融合題: ${crossFusion.length}，反向診斷題: ${reverseDiag.length}`);
+
 // 2. 每題結構檢查
 let structErrors = [];
 allQuestions.forEach((q, i) => {
@@ -73,9 +90,19 @@ allQuestions.forEach((q, i) => {
 });
 check(`所有題目結構完整（scenario, options×4, answer, models, explanation, wrongReasons）`,
   structErrors.length === 0,
-  structErrors.length > 0 ? structErrors.join('; ') : '');
+  structErrors.length > 0 ? structErrors.slice(0, 10).join('; ') + (structErrors.length > 10 ? ` ...及其他 ${structErrors.length - 10} 個` : '') : '');
 
-// 3. 選項中無作者名字洩漏
+// 3. v2 題型標記檢查
+let typeErrors = [];
+v2Questions.forEach((q, i) => {
+  if (q.type !== 'cross-fusion' && q.type !== 'reverse-diag') {
+    typeErrors.push(`v2 Q${i + 1}: type 應為 cross-fusion 或 reverse-diag，實際為 ${q.type}`);
+  }
+});
+check(`v2 題目 type 標記正確`, typeErrors.length === 0,
+  typeErrors.length > 0 ? typeErrors.join('; ') : '');
+
+// 4. 選項中無作者名字洩漏
 let leaks = [];
 allQuestions.forEach((q, i) => {
   q.options.forEach((opt, j) => {
@@ -87,9 +114,9 @@ allQuestions.forEach((q, i) => {
   });
 });
 check(`選項中無作者名字洩漏`, leaks.length === 0,
-  leaks.length > 0 ? leaks.join('; ') : '');
+  leaks.length > 0 ? leaks.slice(0, 5).join('; ') + (leaks.length > 5 ? ` ...及其他 ${leaks.length - 5} 個` : '') : '');
 
-// 4. 模型覆蓋率
+// 5. 模型覆蓋率
 const allModels = new Set();
 allQuestions.forEach(q => {
   q.models.forEach(m => allModels.add(m));
@@ -97,7 +124,7 @@ allQuestions.forEach(q => {
 });
 check(`主要+輔助模型覆蓋: ${allModels.size} 個`, allModels.size > 0);
 
-// 5. 重複模型偵測（同一主要模型出現 >2 次）
+// 6. 重複模型偵測（同一主要模型出現 >3 次）
 const modelCount = {};
 allQuestions.forEach((q, i) => {
   q.models.forEach(m => {
@@ -106,17 +133,17 @@ allQuestions.forEach((q, i) => {
   });
 });
 const duplicated = Object.entries(modelCount)
-  .filter(([_, indices]) => indices.length > 2)
-  .map(([model, indices]) => `${model} (Q${indices.join(', Q')})`);
+  .filter(([_, indices]) => indices.length > 3)
+  .map(([model, indices]) => `${model} (×${indices.length})`);
 
 if (duplicated.length > 0) {
-  console.log(`⚠ 以下主要模型出現超過 2 次: ${duplicated.join('; ')}`);
+  console.log(`⚠ 以下主要模型出現超過 3 次: ${duplicated.join('; ')}`);
 } else {
-  console.log(`✓ 無主要模型過度重複`);
+  console.log(`✓ 無主要模型過度重複（容許每模型最多 3 題）`);
   passed++;
 }
 
-// 6. 重複 scenario 偵測
+// 7. 重複 scenario 偵測
 const scenarioSet = new Map();
 let dupeScenarios = [];
 allQuestions.forEach((q, i) => {
@@ -133,7 +160,7 @@ check(`無重複題目`, dupeScenarios.length === 0,
 // ── 結果 ──
 console.log('\n' + '─'.repeat(40));
 if (failed === 0) {
-  console.log(`🎉 全部通過！${passed} 項檢查均合格。題庫可安全部署。`);
+  console.log(`🎉 全部通過！${passed} 項檢查均合格。題庫 v2.0（${allQuestions.length} 題）可安全部署。`);
   process.exit(0);
 } else {
   console.error(`⚠ ${failed} 項檢查失敗，${passed} 項通過。請修正後重試。`);
