@@ -23,6 +23,7 @@
 
     /* ── 頂部標題 ── */
     header {
+      position: relative;
       text-align: center;
       padding: 40px 0 20px;
       border-bottom: 2px solid #d4d0c8;
@@ -413,6 +414,26 @@
     .mode-tag.tag-v2 { background: #fef3cd; color: #856404; }
     .mode-tag.tag-all { background: #f0e6f6; color: #6f42c1; }
 
+    /* ── 語言切換按鈕 ── */
+    .lang-switch {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #4a7c59;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .lang-switch:hover {
+      background: #3d6a4a;
+      transform: translateY(-1px);
+    }
+
     /* ── RWD ── */
     @media (max-width: 480px) {
       .container { padding: 16px 14px 40px; }
@@ -420,6 +441,12 @@
       .question-card { padding: 20px 16px; }
       .beta-form { flex-direction: column; }
       .munger-quote { padding: 28px 20px; }
+      .lang-switch {
+        top: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -497,12 +524,35 @@ let answered = false;
 
 const app = document.getElementById('app');
 
+// ── 離開警告機制 ──
+let beforeUnloadHandler = null;
+
+function enableBeforeUnloadWarning() {
+  beforeUnloadHandler = (e) => {
+    // 只在測驗進行中才警告
+    if (activeQuiz.length > 0 && currentIndex < activeQuiz.length) {
+      e.preventDefault();
+      e.returnValue = ''; // Chrome 需要這行
+      return '注意：離開後測驗進度將不會保存。如果你想獲得完整的學習體驗或提供回饋，建議完成整個測驗。確定要離開嗎？';
+    }
+  };
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+}
+
+function disableBeforeUnloadWarning() {
+  if (beforeUnloadHandler) {
+    window.removeEventListener('beforeunload', beforeUnloadHandler);
+    beforeUnloadHandler = null;
+  }
+}
+
 // ── 渲染 header ──
 function headerHTML() {
   const modeLabels = { classic: '經典模式', advanced: '進階模式', challenge: '全面挑戰' };
   const quizTotal = quizMode === 'challenge' ? allQuestions.length : QUIZ_SIZE;
   return `
     <header>
+      <a href="/en/" class="lang-switch">中 / EN</a>
       <h1>查理・芒格 思維模型訓練</h1>
       <p>以 100+ 個思維模型為基礎的情境式測驗</p>
       <div class="version">${VERSION}｜題庫 ${allQuestions.length} 題｜${modeLabels[quizMode]} · ${quizTotal} 題</div>
@@ -635,6 +685,8 @@ function nextQuestion() {
 
 // ── 渲染：結果頁 ──
 function renderResult() {
+  disableBeforeUnloadWarning();
+  
   const correctModels = [];
   const wrongModels = [];
   answers.forEach(a => {
@@ -725,6 +777,7 @@ function startQuiz() {
   currentIndex = 0;
   score = 0;
   answers = [];
+  enableBeforeUnloadWarning();
   renderQuestion();
 }
 

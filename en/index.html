@@ -23,6 +23,7 @@
 
     /* ── Header ── */
     header {
+      position: relative;
       text-align: center;
       padding: 40px 0 20px;
       border-bottom: 2px solid #d4d0c8;
@@ -413,6 +414,26 @@
     .mode-tag.tag-v2 { background: #fef3cd; color: #856404; }
     .mode-tag.tag-all { background: #f0e6f6; color: #6f42c1; }
 
+    /* ── Language switch button ── */
+    .lang-switch {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #4a7c59;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .lang-switch:hover {
+      background: #3d6a4a;
+      transform: translateY(-1px);
+    }
+
     /* ── RWD ── */
     @media (max-width: 480px) {
       .container { padding: 16px 14px 40px; }
@@ -420,6 +441,12 @@
       .question-card { padding: 20px 16px; }
       .beta-form { flex-direction: column; }
       .munger-quote { padding: 28px 20px; }
+      .lang-switch {
+        top: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -497,12 +524,35 @@ let answered = false;
 
 const app = document.getElementById('app');
 
+// ── Leave warning mechanism ──
+let beforeUnloadHandler = null;
+
+function enableBeforeUnloadWarning() {
+  beforeUnloadHandler = (e) => {
+    // Only warn during active quiz
+    if (activeQuiz.length > 0 && currentIndex < activeQuiz.length) {
+      e.preventDefault();
+      e.returnValue = ''; // Chrome requires this
+      return 'Warning: Your quiz progress will not be saved if you leave. For the complete learning experience and to provide feedback, we recommend finishing the entire quiz. Are you sure you want to leave?';
+    }
+  };
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+}
+
+function disableBeforeUnloadWarning() {
+  if (beforeUnloadHandler) {
+    window.removeEventListener('beforeunload', beforeUnloadHandler);
+    beforeUnloadHandler = null;
+  }
+}
+
 // ── Render header ──
 function headerHTML() {
   const modeLabels = { classic: 'Classic Mode', advanced: 'Advanced Mode', challenge: 'Full Challenge' };
   const quizTotal = quizMode === 'challenge' ? allQuestions.length : QUIZ_SIZE;
   return `
     <header>
+      <a href="/" class="lang-switch">EN / 中</a>
       <h1>Charlie Munger Mental Models Training</h1>
       <p>Scenario-based quiz grounded in 100+ thinking models</p>
       <div class="version">${VERSION} | ${allQuestions.length} Questions | ${modeLabels[quizMode]} · ${quizTotal} Qs</div>
@@ -635,6 +685,8 @@ function nextQuestion() {
 
 // ── Render: Result page ──
 function renderResult() {
+  disableBeforeUnloadWarning();
+  
   const correctModels = [];
   const wrongModels = [];
   answers.forEach(a => {
@@ -725,6 +777,7 @@ function startQuiz() {
   currentIndex = 0;
   score = 0;
   answers = [];
+  enableBeforeUnloadWarning();
   renderQuestion();
 }
 
