@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node validate.js",
+  "buildCommand": "node validate.js && cd en && node validate.js",
   "outputDirectory": ".",
   "cleanUrls": true,
   "headers": [
@@ -8,6 +8,12 @@
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/en",
+      "destination": "/en/index.html"
     }
   ]
 }

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charlie Munger Mental Models Quiz v2.0</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f0;
+      color: #2c2c2c;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 40px 0 20px;
+      border-bottom: 2px solid #d4d0c8;
+      margin-bottom: 32px;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    header p {
+      font-size: 0.95rem;
+      color: #666;
+    }
+    header .version {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-top: 6px;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      background: #e0ddd5;
+      border-radius: 6px;
+      height: 8px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      background: #4a7c59;
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    /* ── Question card ── */
+    .question-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .question-card .scenario {
+      font-size: 1.05rem;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+    .question-card .scenario strong {
+      color: #4a7c59;
+    }
+
+    /* ── Options ── */
+    .options { list-style: none; }
+    .options li {
+      background: #fafaf7;
+      border: 2px solid #e8e5dd;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.98rem;
+    }
+    .options li:hover {
+      border-color: #4a7c59;
+      background: #f0f5f1;
+    }
+    .options li.selected {
+      border-color: #4a7c59;
+      background: #e8f0ea;
+    }
+    .options li.correct {
+      border-color: #4a7c59;
+      background: #d4edda;
+    }
+    .options li.wrong {
+      border-color: #c0392b;
+      background: #fce4e4;
+    }
+    .options li.disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+    .options li.disabled:hover {
+      border-color: #e8e5dd;
+      background: #fafaf7;
+    }
+    .options li.correct.disabled:hover {
+      border-color: #4a7c59;
+      background: #d4edda;
+    }
+    .options li.wrong.disabled:hover {
+      border-color: #c0392b;
+      background: #fce4e4;
+    }
+
+    /* ── Explanation ── */
+    .explanation {
+      background: #f9f8f4;
+      border-left: 4px solid #4a7c59;
+      border-radius: 0 8px 8px 0;
+      padding: 20px 22px;
+      margin-top: 20px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .explanation.show { display: block; }
+    .explanation .result-tag {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .explanation .result-tag.correct { color: #27763a; }
+    .explanation .result-tag.wrong { color: #c0392b; }
+    .explanation .model-tag {
+      display: inline-block;
+      background: #4a7c59;
+      color: #fff;
+      padding: 3px 12px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      margin-bottom: 10px;
+      margin-right: 6px;
+    }
+    .explanation .model-tag.secondary {
+      background: #7a9e7e;
+    }
+    .explanation .detail {
+      font-size: 0.93rem;
+      color: #444;
+      margin-top: 8px;
+      line-height: 1.8;
+    }
+    .explanation .wrong-reasons {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #ccc;
+      font-size: 0.88rem;
+      color: #666;
+    }
+    .explanation .wrong-reasons strong {
+      color: #555;
+    }
+
+    /* ── Button ── */
+    .btn {
+      display: inline-block;
+      padding: 12px 32px;
+      background: #4a7c59;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 16px;
+    }
+    .btn:hover { background: #3d6a4a; }
+    .btn:disabled {
+      background: #bbb;
+      cursor: not-allowed;
+    }
+    .btn-center { text-align: center; }
+
+    /* ── Start & Result pages ── */
+    .start-page, .result-page {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .start-page h2 {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+    .start-page p {
+      color: #666;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .start-page .note {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 20px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .result-page h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+    .result-page .score {
+      font-size: 3rem;
+      font-weight: 800;
+      color: #4a7c59;
+      margin: 16px 0;
+    }
+    .result-page .score span {
+      font-size: 1.2rem;
+      color: #888;
+      font-weight: 400;
+    }
+    .result-page .summary {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: left;
+      margin: 24px 0;
+      font-size: 0.93rem;
+      line-height: 1.8;
+    }
+    .result-page .summary h3 {
+      margin-bottom: 12px;
+      font-size: 1.05rem;
+    }
+    .result-page .model-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .result-page .model-list .tag {
+      background: #e8f0ea;
+      color: #3d6a4a;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+    .result-page .model-list .tag.missed {
+      background: #fce4e4;
+      color: #a33;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Munger quote card ── */
+    .munger-quote {
+      background: #2c2c2c;
+      color: #e8e5dd;
+      border-radius: 12px;
+      padding: 32px 28px;
+      margin: 28px 0;
+      position: relative;
+    }
+    .munger-quote::before {
+      content: '"';
+      font-size: 4rem;
+      color: #4a7c59;
+      position: absolute;
+      top: 8px;
+      left: 16px;
+      line-height: 1;
+      opacity: 0.5;
+    }
+    .munger-quote .quote-text {
+      font-size: 1.05rem;
+      line-height: 1.9;
+      padding-left: 8px;
+      font-style: italic;
+    }
+    .munger-quote .quote-source {
+      text-align: right;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #999;
+    }
+
+    /* ── Beta signup section ── */
+    .beta-section {
+      background: linear-gradient(135deg, #f0f5f1 0%, #e8f0ea 100%);
+      border: 2px solid #4a7c59;
+      border-radius: 12px;
+      padding: 32px 28px;
+      margin: 28px 0;
+      text-align: center;
+    }
+    .beta-section h3 {
+      font-size: 1.15rem;
+      margin-bottom: 8px;
+      color: #2c2c2c;
+    }
+    .beta-section p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .beta-form {
+      display: flex;
+      gap: 10px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+    .beta-form input[type="email"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #d4d0c8;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .beta-form input[type="email"]:focus {
+      border-color: #4a7c59;
+    }
+    .beta-form button {
+      padding: 12px 24px;
+      background: #4a7c59;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .beta-form button:hover { background: #3d6a4a; }
+    .beta-form button:disabled {
+      background: #bbb;
+      cursor: not-allowed;
+    }
+    .beta-success {
+      color: #27763a;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 12px 0;
+    }
+    .beta-note {
+      font-size: 0.78rem;
+      color: #999;
+      margin-top: 12px;
+    }
+
+    /* ── Mode selection cards ── */
+    .mode-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 24px 0;
+      text-align: left;
+    }
+    .mode-card {
+      background: #fff;
+      border: 2px solid #e8e5dd;
+      border-radius: 10px;
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-card:hover {
+      border-color: #4a7c59;
+      background: #f0f5f1;
+    }
+    .mode-card.selected {
+      border-color: #4a7c59;
+      background: #e8f0ea;
+    }
+    .mode-card .mode-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+    .mode-card .mode-desc {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.5;
+    }
+    .mode-card .mode-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .mode-tag.tag-v1 { background: #e8f0ea; color: #3d6a4a; }
+    .mode-tag.tag-v2 { background: #fef3cd; color: #856404; }
+    .mode-tag.tag-all { background: #f0e6f6; color: #6f42c1; }
+
+    /* ── RWD ── */
+    @media (max-width: 480px) {
+      .container { padding: 16px 14px 40px; }
+      header h1 { font-size: 1.3rem; }
+      .question-card { padding: 20px 16px; }
+      .beta-form { flex-direction: column; }
+      .munger-quote { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- Rendered by JavaScript -->
+</div>
+
+<!-- Question bank (modular loading for easy maintenance and expansion) -->
+<script src="questions/_loader.js"></script>
+<script src="questions/01-general.js"></script>
+<script src="questions/02-math.js"></script>
+<script src="questions/03-systems.js"></script>
+<script src="questions/04-physics-bio.js"></script>
+<script src="questions/05-psychology.js"></script>
+<script src="questions/06-economics-war.js"></script>
+<script src="questions/07-cross-fusion.js"></script>
+<script src="questions/08-reverse-diag.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  Charlie Munger Mental Models Training Quiz v2.0
+//  150 questions, random selection per session
+//  Decoys from: Kahneman / Eyal / Lindstrom / Greene / Taleb / Varol / Merath
+// ═══════════════════════════════════════════════════
+const VERSION = 'v2.0 — Feb 2026';
+const QUIZ_SIZE = 20;
+
+// ── Question categories ──
+const v1Questions = allQuestions.filter(q => !q.type);
+const v2Questions = allQuestions.filter(q => q.type === 'cross-fusion' || q.type === 'reverse-diag');
+
+// ── Quiz mode ──
+let quizMode = 'classic'; // classic | advanced | challenge
+
+// ── Munger quotes (from Poor Charlie's Almanack) ──
+const MUNGER_QUOTES = [
+  "I constantly see people rise in life who are not the smartest, sometimes not even the most diligent, but they are learning machines. They go to bed every night a little wiser than they were when they got up.",
+  "In my whole life, I have known no wise people who didn't read all the time — none, zero.",
+  "Spend each day trying to be a little wiser than you were when you woke up.",
+  "Acknowledging what you don't know is the dawning of wisdom.",
+  "It is remarkable how much long-term advantage people like us have gotten by trying to be consistently not stupid, instead of trying to be very intelligent.",
+  "The big money is not in the buying and selling, but in the waiting.",
+  "A lot of success in life and business comes from knowing what you want to avoid: early death, a bad marriage, etc.",
+  "If you don't get this elementary, but mildly unnatural, mathematics of elementary probability into your repertoire, then you go through a long life like a one-legged man in an ass-kicking contest.",
+  "We all are learning, modifying, or destroying ideas all the time. Rapid destruction of your ideas when the time is right is one of the most valuable qualities you can acquire.",
+  "The best thing a human being can do is to help another human being know more.",
+  "I believe in the discipline of mastering the best that other people have ever figured out.",
+  "You're not going to get very far in life based on what you already know. You're going to advance in life by what you're going to learn after you leave here.",
+  "I think I've been in the top 5% of my age cohort all my life in understanding the power of incentives, and all my life I've underestimated it.",
+  "I have been shaped by going to good schools, marrying the right woman, learning from other people, setting high standards, and having some successes early in life.",
+  "It's waiting that helps you as an investor, and a lot of people just can't stand to wait.",
+  "If you skillfully follow the multidisciplinary path, you will never wish to come back. It would be like cutting off your hands.",
+  "The game of life is the game of everlasting learning. At least it is if you want to win.",
+  "Mimicking the herd invites regression to the mean.",
+  "Knowing what you don't know is more useful than being brilliant."
+];
+
+// ── Fisher-Yates Shuffle ──
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── App state ──
+let activeQuiz = [];
+let currentIndex = 0;
+let score = 0;
+let answers = [];
+let answered = false;
+
+const app = document.getElementById('app');
+
+// ── Render header ──
+function headerHTML() {
+  const modeLabels = { classic: 'Classic Mode', advanced: 'Advanced Mode', challenge: 'Full Challenge' };
+  const quizTotal = quizMode === 'challenge' ? allQuestions.length : QUIZ_SIZE;
+  return `
+    <header>
+      <h1>Charlie Munger Mental Models Training</h1>
+      <p>Scenario-based quiz grounded in 100+ thinking models</p>
+      <div class="version">${VERSION} | ${allQuestions.length} Questions | ${modeLabels[quizMode]} · ${quizTotal} Qs</div>
+    </header>
+  `;
+}
+
+// ── Render: Start page ──
+function renderStart() {
+  app.innerHTML = `
+    ${headerHTML()}
+    <div class="start-page">
+      <h2>Welcome to the Mental Training Ground</h2>
+      <p>Question bank: <strong>${allQuestions.length} scenario-based questions</strong> (v1 Classic ${v1Questions.length} + v2 Advanced ${v2Questions.length})</p>
+      <p>After each answer, you'll see the corresponding Munger mental model and detailed explanation.</p>
+
+      <div class="mode-cards">
+        <div class="mode-card ${quizMode === 'classic' ? 'selected' : ''}" onclick="selectMode('classic')">
+          <div class="mode-title">Classic Mode <span class="mode-tag tag-v1">v1</span></div>
+          <div class="mode-desc">Random selection of ${QUIZ_SIZE} questions from all ${allQuestions.length}. Covers all question types, great for daily practice.</div>
+        </div>
+        <div class="mode-card ${quizMode === 'advanced' ? 'selected' : ''}" onclick="selectMode('advanced')">
+          <div class="mode-title">Advanced Mode <span class="mode-tag tag-v2">v2 NEW</span></div>
+          <div class="mode-desc">${QUIZ_SIZE} questions from the ${v2Questions.length} advanced set only. Includes cross-skill fusion and reverse diagnosis — significantly harder.</div>
+        </div>
+        <div class="mode-card ${quizMode === 'challenge' ? 'selected' : ''}" onclick="selectMode('challenge')">
+          <div class="mode-title">Full Challenge <span class="mode-tag tag-all">FULL</span></div>
+          <div class="mode-desc">All ${allQuestions.length} questions in random order, done in one sitting. For hardcore players who want the complete test.</div>
+        </div>
+      </div>
+
+      <div class="note">
+        This isn't an exam—it's a tool to <strong>train you to apply the right mental models in real life</strong>.<br>
+        The goal is to form correct intuitions, not chase a perfect score. Every reset brings a different question set.
+      </div>
+      <button class="btn" onclick="startQuiz()">Start Training</button>
+    </div>
+  `;
+}
+
+function selectMode(mode) {
+  quizMode = mode;
+  renderStart();
+}
+
+// ── Render: Question ──
+function renderQuestion() {
+  const q = activeQuiz[currentIndex];
+  const total = activeQuiz.length;
+  const pct = ((currentIndex) / total * 100).toFixed(0);
+
+  app.innerHTML = `
+    ${headerHTML()}
+    <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="progress-text">Question ${currentIndex + 1} of ${total}</div>
+
+    <div class="question-card">
+      <div class="scenario">${q.scenario}</div>
+      <ul class="options" id="optionsList">
+        ${q.options.map((opt, i) => `<li data-idx="${i}" onclick="selectOption(${i})">${opt}</li>`).join('')}
+      </ul>
+
+      <div class="explanation" id="explanation">
+        <div class="result-tag" id="resultTag"></div>
+        <div id="modelTags"></div>
+        <div class="detail" id="expDetail"></div>
+        <div class="wrong-reasons" id="wrongReasons"></div>
+      </div>
+    </div>
+
+    <div class="btn-center">
+      <button class="btn" id="nextBtn" style="display:none" onclick="nextQuestion()">
+        ${currentIndex < activeQuiz.length - 1 ? 'Next Question →' : 'View Results'}
+      </button>
+    </div>
+  `;
+  answered = false;
+}
+
+// ── Select option ──
+function selectOption(idx) {
+  if (answered) return;
+  answered = true;
+
+  const q = activeQuiz[currentIndex];
+  const isCorrect = idx === q.answer;
+  if (isCorrect) score++;
+  answers.push({ qIndex: currentIndex, selected: idx, correct: isCorrect });
+
+  const lis = document.querySelectorAll('#optionsList li');
+  lis.forEach((li, i) => {
+    li.classList.add('disabled');
+    if (i === q.answer) li.classList.add('correct');
+    if (i === idx && !isCorrect) li.classList.add('wrong');
+  });
+
+  const expEl = document.getElementById('explanation');
+  const tagEl = document.getElementById('resultTag');
+  const modelEl = document.getElementById('modelTags');
+  const detailEl = document.getElementById('expDetail');
+  const wrongEl = document.getElementById('wrongReasons');
+
+  tagEl.textContent = isCorrect ? '✅ Correct!' : '❌ Incorrect';
+  tagEl.className = 'result-tag ' + (isCorrect ? 'correct' : 'wrong');
+
+  let tagsHTML = q.models.map(m => `<span class="model-tag">Primary: ${m}</span>`).join('');
+  if (q.secondaryModels && q.secondaryModels.length > 0) {
+    tagsHTML += q.secondaryModels.map(m => `<span class="model-tag secondary">Secondary: ${m}</span>`).join('');
+  }
+  modelEl.innerHTML = tagsHTML;
+  detailEl.innerHTML = q.explanation;
+  wrongEl.innerHTML = `<strong>Why other options seem reasonable but are actually wrong:</strong><br>${q.wrongReasons}`;
+
+  expEl.classList.add('show');
+  document.getElementById('nextBtn').style.display = 'inline-block';
+
+  setTimeout(() => expEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+// ── Next question ──
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex < activeQuiz.length) {
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    renderResult();
+  }
+}
+
+// ── Render: Result page ──
+function renderResult() {
+  const correctModels = [];
+  const wrongModels = [];
+  answers.forEach(a => {
+    const q = activeQuiz[a.qIndex];
+    const allModels = [...q.models, ...(q.secondaryModels || [])];
+    if (a.correct) {
+      correctModels.push(...allModels);
+    } else {
+      wrongModels.push(...allModels);
+    }
+  });
+
+  const uniqueCorrect = [...new Set(correctModels)];
+  const uniqueWrong = [...new Set(wrongModels)];
+
+  const total = activeQuiz.length;
+  const pctScore = score / total;
+  let level = '';
+  if (pctScore >= 0.9) level = '🏆 Munger-Level Master — Your latticework of mental models is remarkably complete!';
+  else if (pctScore >= 0.7) level = '📈 Excellent Multidisciplinary Thinker — Keep practicing to internalize these models as instincts.';
+  else if (pctScore >= 0.5) level = '🔍 Promising Rational Decision-Maker — Suggest re-reading explanations for questions you missed.';
+  else level = '📚 Mental Training Beginner — No worries! Munger says "lifelong learning" — now is the perfect time to start.';
+
+  // Random Munger quote
+  const randomQuote = MUNGER_QUOTES[Math.floor(Math.random() * MUNGER_QUOTES.length)];
+
+  app.innerHTML = `
+    ${headerHTML()}
+    <div class="result-page">
+      <h2>Training Results</h2>
+      <div class="score">${score} <span>/ ${total}</span></div>
+      <p>${level}</p>
+
+      <div class="summary">
+        <h3>Mental models you've mastered:</h3>
+        <div class="model-list">
+          ${uniqueCorrect.length > 0
+            ? uniqueCorrect.map(m => `<span class="tag">${m}</span>`).join('')
+            : '<span style="color:#999">(None)</span>'}
+        </div>
+      </div>
+
+      <div class="summary">
+        <h3>Models to strengthen:</h3>
+        <div class="model-list">
+          ${uniqueWrong.length > 0
+            ? uniqueWrong.map(m => `<span class="tag missed">${m}</span>`).join('')
+            : '<span style="color:#4a7c59">Perfect score! Incredible.</span>'}
+        </div>
+      </div>
+
+      <div class="munger-quote">
+        <div class="quote-text">${randomQuote}</div>
+        <div class="quote-source">— Charlie Munger, Poor Charlie's Almanack</div>
+      </div>
+
+      <p style="font-size:0.88rem;color:#666;text-align:center;margin:8px 0 24px;">
+        Every reset brings a new set of questions. Keep training until Munger's models become your instinctive responses.
+      </p>
+
+      <button class="btn" onclick="resetQuiz()">Try Again (New Random Set)</button>
+
+      <div class="beta-section">
+        <h3>Enjoying this training?</h3>
+        <p>Leave your email to become a Beta user.<br>We're building a more comprehensive mental training system.</p>
+        <div id="beta-form-area">
+          <form class="beta-form" onsubmit="handleBetaSignup(event)">
+            <input type="email" id="beta-email" placeholder="your@email.com" required>
+            <button type="submit">Join Beta</button>
+          </form>
+        </div>
+        <div class="beta-note">No spam. Only Beta release notifications.</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Control functions ──
+function startQuiz() {
+  let pool;
+  if (quizMode === 'advanced') {
+    pool = v2Questions;
+  } else {
+    pool = allQuestions;
+  }
+  const size = quizMode === 'challenge' ? pool.length : Math.min(QUIZ_SIZE, pool.length);
+  activeQuiz = shuffle(pool).slice(0, size);
+  currentIndex = 0;
+  score = 0;
+  answers = [];
+  renderQuestion();
+}
+
+function resetQuiz() {
+  activeQuiz = [];
+  currentIndex = 0;
+  score = 0;
+  answers = [];
+  renderStart();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Beta signup ──
+function handleBetaSignup(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('beta-email');
+  const email = emailInput.value.trim();
+  if (!email) return;
+
+  // Store email in localStorage (frontend only, can connect to backend API later)
+  const existing = JSON.parse(localStorage.getItem('munger_beta_emails') || '[]');
+  if (!existing.includes(email)) {
+    existing.push(email);
+    localStorage.setItem('munger_beta_emails', JSON.stringify(existing));
+  }
+
+  document.getElementById('beta-form-area').innerHTML =
+    '<div class="beta-success">✅ Thank you! We\'ll notify you when the Beta launches.</div>';
+}
+
+// ── Initialize ──
+renderStart();
+</script>
+</body>
+</html>
